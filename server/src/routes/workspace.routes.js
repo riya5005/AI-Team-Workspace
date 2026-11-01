@@ -22,6 +22,10 @@ const projectRoutes = require("./project.routes");
 const taskRoutes = require("./task.routes");
 const activityRoutes = require("./activity.routes");
 
+const aiRoutes = require("./ai.routes");
+// next to the other nested routes:
+router.use("/:workspaceId/ai", aiRoutes);
+
 // Every workspace route requires login
 router.use(authMiddleware);
 

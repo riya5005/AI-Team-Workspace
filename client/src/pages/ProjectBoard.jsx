@@ -114,3 +114,7 @@ export default function ProjectBoard() {
     </div>
   );
 }
+
+import AiBreakdown from "../components/AiBreakdown";
+// ...
+<AiBreakdown workspaceId={id} projectId={projectId} onAdded={load} />
