@@ -1,9 +1,11 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
-  withCredentials: true, // sends and receives the httpOnly cookie
+  baseURL: "/api",
+  withCredentials: true,
 });
+
+
 
 // Turn any backend error into a readable string
 export function getErrorMessage(err) {

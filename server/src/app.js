@@ -7,6 +7,7 @@ const healthRouter = require("./routes/health.routes");
 const authRouter = require("./routes/auth.routes");
 const ApiError = require("./utils/ApiError");
 const errorMiddleware = require("./middlewares/error.middleware");
+   app.set("trust proxy", 1); // lets Express see HTTPS behind Render/Vercel, needed for secure cookies
 
 const app = express();
 

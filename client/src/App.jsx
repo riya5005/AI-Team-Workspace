@@ -5,6 +5,10 @@ import AuthPage from "./pages/AuthPage";
 import Workspaces from "./pages/Workspaces";
 import WorkspaceDetail from "./pages/WorkspaceDetail";
 
+import ProjectBoard from "./pages/ProjectBoard";
+// inside the Layout route, below the WorkspaceDetail route:
+<Route path="/workspaces/:id/projects/:projectId" element={<ProjectBoard />} />
+
 export default function App() {
   return (
     <Routes>
