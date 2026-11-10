@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Project = require("../models/project.model");
 const Task = require("../models/task.model");
 const ApiError = require("../utils/ApiError");
+const logActivity = require("../utils/logActivity");
 
 // Find a project, but ONLY inside the workspace from the URL.
 // Without the workspace filter, a user could read another workspace's project by id.
@@ -19,6 +20,16 @@ async function createProject(req, res) {
     description: req.body.description,
     createdBy: req.user._id,
   });
+
+  await logActivity({
+    workspace: req.workspace._id,
+    actor: req.user._id,
+    action: "project.created",
+    message: `${req.user.username} created project "${project.name}"`,
+    entityType: "project",
+    entityId: project._id,
+  });
+
   res.status(201).json({ success: true, project });
 }
 
@@ -44,6 +55,16 @@ async function deleteProject(req, res) {
   const project = await findProjectOrFail(req.workspace._id, req.params.projectId);
   await Task.deleteMany({ project: project._id }); // don't leave orphan tasks
   await project.deleteOne();
+
+  await logActivity({
+    workspace: req.workspace._id,
+    actor: req.user._id,
+    action: "project.deleted",
+    message: `${req.user.username} deleted project "${project.name}"`,
+    entityType: "project",
+    entityId: project._id,
+  });
+
   res.status(200).json({ success: true, message: "Project deleted" });
 }
 

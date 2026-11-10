@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Task = require("../models/task.model");
 const ApiError = require("../utils/ApiError");
 const { findProjectOrFail } = require("./project.controllers");
+const logActivity = require("../utils/logActivity");
 
 const SORTABLE = ["createdAt", "updatedAt", "dueDate", "title"];
 
@@ -28,6 +29,17 @@ async function createTask(req, res) {
     workspace: req.workspace._id,
     createdBy: req.user._id,
   });
+
+  // record this in the activity log
+  await logActivity({
+    workspace: req.workspace._id,
+    actor: req.user._id,
+    action: "task.created",
+    message: `${req.user.username} created task "${task.title}"`,
+    entityType: "task",
+    entityId: task._id,
+  });
+
   res.status(201).json({ success: true, task });
 }
 
@@ -101,12 +113,27 @@ async function updateTask(req, res) {
 
   if (req.body.assignee !== undefined) assertAssigneeIsMember(req.workspace, req.body.assignee);
 
+  // remember the old status so we can tell if it changed
+  const oldStatus = task.status;
+
   // Only copy fields the validator allowed
   const fields = ["title", "description", "status", "priority", "assignee", "dueDate"];
   for (const f of fields) {
     if (req.body[f] !== undefined) task[f] = req.body[f];
   }
   await task.save();
+
+  // log only when the status actually changed
+  if (req.body.status !== undefined && req.body.status !== oldStatus) {
+    await logActivity({
+      workspace: req.workspace._id,
+      actor: req.user._id,
+      action: "task.status_changed",
+      message: `${req.user.username} moved "${task.title}" from ${oldStatus} to ${task.status}`,
+      entityType: "task",
+      entityId: task._id,
+    });
+  }
 
   res.status(200).json({ success: true, task });
 }
@@ -120,6 +147,16 @@ async function deleteTask(req, res) {
   if (!isManager && !isCreator) throw new ApiError(403, "You can only delete tasks you created");
 
   await task.deleteOne();
+
+  await logActivity({
+    workspace: req.workspace._id,
+    actor: req.user._id,
+    action: "task.deleted",
+    message: `${req.user.username} deleted task "${task.title}"`,
+    entityType: "task",
+    entityId: task._id,
+  });
+
   res.status(200).json({ success: true, message: "Task deleted" });
 }
 

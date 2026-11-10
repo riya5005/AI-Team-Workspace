@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Workspace = require("../models/workspace.model");
 const User = require("../models/user.model");
 const ApiError = require("../utils/ApiError");
+const logActivity = require("../utils/logActivity");
 
 async function createWorkspace(req, res) {
   const workspace = await Workspace.create({
@@ -67,6 +68,15 @@ async function addMember(req, res) {
   req.workspace.members.push({ user: userToAdd._id, role });
   await req.workspace.save();
 
+  await logActivity({
+    workspace: req.workspace._id,
+    actor: req.user._id,
+    action: "member.added",
+    message: `${req.user.username} added ${userToAdd.username} as ${role}`,
+    entityType: "member",
+    entityId: userToAdd._id,
+  });
+
   res.status(201).json({ success: true, message: "Member added" });
 }
 
@@ -80,6 +90,17 @@ async function updateMemberRole(req, res) {
 
   target.role = req.body.role;
   await req.workspace.save();
+
+  const targetUser = await User.findById(userId);
+
+  await logActivity({
+    workspace: req.workspace._id,
+    actor: req.user._id,
+    action: "member.role_changed",
+    message: `${req.user.username} changed ${targetUser ? targetUser.username : "a member"} to ${req.body.role}`,
+    entityType: "member",
+    entityId: userId,
+  });
 
   res.status(200).json({ success: true, message: "Role updated" });
 }
@@ -99,6 +120,17 @@ async function removeMember(req, res) {
 
   req.workspace.members = req.workspace.members.filter((m) => !m.user.equals(userId));
   await req.workspace.save();
+
+  const targetUser = await User.findById(userId);
+
+  await logActivity({
+    workspace: req.workspace._id,
+    actor: req.user._id,
+    action: "member.removed",
+    message: `${req.user.username} removed ${targetUser ? targetUser.username : "a member"}`,
+    entityType: "member",
+    entityId: userId,
+  });
 
   res.status(200).json({ success: true, message: "Member removed" });
 }

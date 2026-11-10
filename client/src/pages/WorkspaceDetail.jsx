@@ -90,6 +90,9 @@ export default function WorkspaceDetail() {
         </form>
       )}
 
+      import ProjectsPanel from "../components/ProjectsPanel";
+<ProjectsPanel workspaceId={id} />
+
       <h3>Members ({workspace.members.length})</h3>
       <table>
         <thead>
